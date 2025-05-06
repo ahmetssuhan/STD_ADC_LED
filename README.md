@@ -1,70 +1,94 @@
-# STM32F4 Discovery - ADC Controlled LED Indicator
+# STM32F4 ADC‑Controlled LED Demo
 
-This project demonstrates the use of the STM32F407G-DISC1 microcontroller board to read analog input via ADC and control LEDs based on the converted digital value. A potentiometer is connected to pin `PA1`, and the onboard LEDs (`PD12` to `PD15`) indicate the current voltage level.
+This example demonstrates how to read an analog voltage on **PA1** using the on‑chip 8‑bit ADC (ADC1) of the **STM32F407G‑DISC1** board and drive the four on‑board LEDs (**PD12–PD15**) according to the measured value.
 
-## Overview
+---
 
-The application performs the following tasks:
-- Initializes GPIO for LEDs (output) and analog input (PA1).
-- Configures ADC1 in independent mode with 8-bit resolution.
-- Reads the analog voltage on PA1 using software-triggered conversion.
-- Lights up different LEDs depending on the ADC value.
+## Hardware
 
-## Hardware Connections
+| Item          | Details                                                        |
+| ------------- | -------------------------------------------------------------- |
+| MCU board     | STM32F407G‑DISC1 (STM32F4‑Discovery)                           |
+| Analog source | 0–3.3 V potentiometer wiper connected to **PA1**               |
+| LEDs          | On‑board: PD12 (Green), PD13 (Orange), PD14 (Red), PD15 (Blue) |
 
-| Component       | Pin         | Description             |
-|----------------|-------------|-------------------------|
-| Potentiometer   | PA1 (ADC1)  | Analog input voltage    |
-| LED Green       | PD12        | Indicates ADC range     |
-| LED Orange      | PD13        | Indicates ADC range     |
-| LED Red         | PD14        | Indicates ADC range     |
-| LED Blue        | PD15        | Indicates ADC range     |
+**Wiring**
 
-## ADC Value to LED Mapping
+```
+Potentiometer → PA1 (ADC Channel 1)
+              GND ↔ GND
+              Vref ↔ 3V3
+```
 
-| ADC Value Range | Active LED(s)      |
-|-----------------|--------------------|
-| 0–49            | PD12               |
-| 50–99           | PD13               |
-| 100–149         | PD14               |
-| 150–199         | PD15               |
-| 200–255         | PD12, PD13, PD14, PD15 |
+---
 
-## Configuration Summary
+## Folder Structure
 
-- **ADC Resolution**: 8 bits
-- **ADC Channel**: Channel 1 (PA1)
-- **ADC Mode**: Independent
-- **Prescaler**: Divided by 4
-- **Sampling Time**: 56 Cycles
-- **LEDs GPIO Port**: GPIOD
-- **Analog GPIO Port**: GPIOA
+```
+project/
+├── Inc/            # Header files
+├── Src/            # Source files (main.c, system_stm32f4xx.c …)
+├── .cproject/.project  # Atollic TrueSTUDIO metadata
+└── README.md       # This file
+```
 
-## File Structure
-'''project/
-├── main.c # Main application source
-├── README.md # Project description
-├── stm32f4xx.h # CMSIS headers
-├── stm32f4_discovery.h # Board support headers'''
+---
 
+## Import, Build & Flash (Atollic TrueSTUDIO 9.3)
 
-## How to Use
+1. **Import the project**
 
-1. Connect a potentiometer output to pin PA1.
-2. Load the project in STM32CubeIDE or Keil uVision.
-3. Compile and flash the firmware to STM32F407G-DISC1.
-4. Vary the potentiometer to change the input voltage.
-5. Observe LED behavior in accordance with ADC value.
+   * *File ▸ Import ▸ Existing Projects into Workspace* → select the `project` folder.
+2. **Connect the board** via the ST‑LINK USB port.
+3. **Build** with *Project ▸ Build All* (or **Ctrl+B**).
+4. **Flash & debug** with the *Debug* toolbar button or **F11**.
 
-## Dependencies
+> Default settings assume the ST‑LINK GDB server bundled with TrueSTUDIO. If you changed ST‑LINK firmware or drivers, adjust the debugger configuration accordingly.
 
-- STM32 Standard Peripheral Library
-- STM32F407G-DISC1 board
-- ST-Link programmer/debugger
+---
+
+## Code Walk‑Through
+
+| Function        | Purpose                                                                                                                                                                                                              |
+| --------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `GPIO_Config()` | Enables clocks for GPIOD and GPIOA, sets PD12–PD15 as push‑pull outputs and PA1 as analog input.                                                                                                                     |
+| `ADC_Config()`  | Enables the ADC1 clock, configures independent mode, prescaler ÷4, 8‑bit resolution, then enables ADC1.                                                                                                              |
+| `Read_ADC()`    | Selects **Channel 1**, starts a software conversion, waits for **EOC**, and returns the 8‑bit digital value (0–255).                                                                                                 |
+| `main()`        | Initializes peripherals, enters an infinite loop, reads the ADC value, and lights LEDs according to these ranges:<br/>`< 50 → Green` • `50–99 → Orange` • `100–149 → Red` • `150–199 → Blue` • `200–255 → All LEDs`. |
+
+### Timing Notes
+
+* **Sample time** is set to 56 cycles, balancing speed and settling for moderate source impedances (<10 kΩ).
+* At 8‑bit resolution the full‑scale reading corresponds to 3.3 V, so each LSB ≈ 13 mV.
+
+---
+
+## Customisation
+
+* **Resolution** – change `ADC_Resolution_8b` to `12b`, `10b`, or `6b` and adjust the LED thresholds.
+* **Input pin** – select another analog channel with `ADC_RegularChannelConfig()`.
+* **LED logic** – replace the if‑else chain with a LUT or a `switch` for faster execution.
+
+---
+
+## Troubleshooting
+
+| Symptom                            | Likely Cause & Fix                                                                             |
+| ---------------------------------- | ---------------------------------------------------------------------------------------------- |
+| All ADC reads return 0             | Check potentiometer wiring, verify 3.3 V reference, ensure PA1 isn’t left floating.            |
+| ST‑LINK *“Target no device found”* | Wrong BOOT0/BOOT1 setting, faulty USB cable, out‑of‑date ST‑LINK firmware.                     |
+| LEDs flicker randomly              | Source impedance too high ➜ lower potentiometer value or increase sample time to ≥ 144 cycles. |
+
+---
+
+## References
+
+* **RM0090** – *STM32F4 Reference Manual*, §11 (ADC) and §8 (GPIO).
+* **AN2834** – *How to get the best ADC accuracy*.
+* STMicroelectronics application example projects for STM32F4‑Discovery.
+
+---
 
 ## License
 
-This project is distributed for educational purposes. You may modify and use it freely for personal or academic use.
-
-
-
+This example is released under the MIT License – see `LICENSE` for details.
