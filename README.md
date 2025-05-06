@@ -41,4 +41,30 @@ The application performs the following tasks:
 - **Analog GPIO Port**: GPIOA
 
 ## File Structure
+project/
+├── main.c # Main application source
+├── README.md # Project description
+├── stm32f4xx.h # CMSIS headers
+├── stm32f4_discovery.h # Board support headers
+
+
+## How to Use
+
+1. Connect a potentiometer output to pin PA1.
+2. Load the project in STM32CubeIDE or Keil uVision.
+3. Compile and flash the firmware to STM32F407G-DISC1.
+4. Vary the potentiometer to change the input voltage.
+5. Observe LED behavior in accordance with ADC value.
+
+## Dependencies
+
+- STM32 Standard Peripheral Library
+- STM32F407G-DISC1 board
+- ST-Link programmer/debugger
+
+## License
+
+This project is distributed for educational purposes. You may modify and use it freely for personal or academic use.
+
+
 
