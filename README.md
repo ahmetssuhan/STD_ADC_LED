@@ -41,11 +41,11 @@ The application performs the following tasks:
 - **Analog GPIO Port**: GPIOA
 
 ## File Structure
-project/
+'''project/
 ├── main.c # Main application source
 ├── README.md # Project description
 ├── stm32f4xx.h # CMSIS headers
-├── stm32f4_discovery.h # Board support headers
+├── stm32f4_discovery.h # Board support headers'''
 
 
 ## How to Use
